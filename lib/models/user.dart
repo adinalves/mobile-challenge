@@ -1,5 +1,7 @@
 class Usuario {
-  int userId;
+  //int userId;
+ // int id;
+  int id;
   String login;
   String url;
   String html_url;
@@ -8,9 +10,10 @@ class Usuario {
   String email;
   String name;
   String avatar;
-  bool favorito = false;
+  //bool favorito = false;
   Usuario({
     //this.userId,
+    this.id,
     this.login,
     this.bio,
     this.localizacao,
@@ -20,9 +23,9 @@ class Usuario {
     this.html_url,
   });
 
-  void setFavorito(){
-    favorito = true;
-  }
+  // void setFavorito(){
+  //   favorito = true;
+  // }
 
   String getLogin(){
     return login;
@@ -33,6 +36,7 @@ class Usuario {
 
     return Usuario(
       //userId: json['id'] !=null? json['id'] : 'Não informado',
+      id : json['id'],
       login: json['login'] !=null? json['login'] : 'Não informado',
       bio: json['bio'] !=null ? json['bio'] : 'Não informada',
       localizacao: json['location'] !=null? json['location'] : 'Não informada',
@@ -42,5 +46,19 @@ class Usuario {
       html_url: json['html_url'] !=null? json['html_url'] : 'Não informado',
     );
   }
+
+  Map<String, dynamic>toJson() => {
+      'id': id,
+      'login': login,
+      'bio': bio,
+      'location': localizacao,
+      'avatar_url': avatar,
+      'url': url,
+      'email': email,
+      'html_url': html_url,
+
+
+  };
+
 
 }

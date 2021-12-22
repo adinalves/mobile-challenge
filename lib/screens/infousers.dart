@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile_challenge/banco_de_dados/user_helpers.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:mobile_challenge/models/user.dart';
+
 import 'package:mobile_challenge/screens/componenents/botao.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile_challenge/banco_de_dados/user_helpers.dart';
 
 class InfoUsers extends StatefulWidget {
   InfoUsers({Key key, this.url}) : super(key: key);
@@ -85,6 +88,51 @@ class _InfoUsersState extends State<InfoUsers> {
 }
 
 class ListarUser extends StatelessWidget {
+  void SalvarUsuario(context, Usuario user) async {
+    bool resultado = await _db.inserirUsuario(user);
+
+    if (resultado) {
+      print("Salvo com sucesso" + resultado.toString());
+      showDialog(context: context, builder: (_) => AlertDialog(title: Text("Usuário favoritado com sucesso!"),));
+    } else {
+      print("Erro ao Salvar!");
+      showDialog(context: context, builder: (_) => AlertDialog(title: Text("Usuário já está favoritado."),));
+    }
+    
+    
+  }
+
+  void exibirTelaFavorito(context, Usuario usuario) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Favoritar Usuário"),
+            content: Text("Você deseja favoritar este usuário?"),
+            backgroundColor: Colors.white,
+            actions: <Widget>[
+              ElevatedButton(
+                onPressed: () {
+                  print("Clicou no cancelar");
+                  Navigator.pop(context);
+                },
+                child: Text("Cancelar"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  SalvarUsuario(context, usuario);
+                  print("Clicou no sim");
+                  Navigator.pop(context);
+                },
+                child: Text("Sim"),
+              )
+            ],
+          );
+        });
+  }
+
+  UserHelpers _db = UserHelpers();
+
   ListarUser({Key key, this.user, this.count}) : super(key: key);
   final Usuario user;
   final count;
@@ -120,25 +168,50 @@ class ListarUser extends StatelessWidget {
                         "Login: ${user.login}\n\nLocalização: ${user.localizacao}\n\nEmail: ${user.email}\n\nBio: ${user.bio}\n",
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     //subtitle: Text("${user.url}"),
-                  ),
-                ),
-                TextButton(
-                  style: ButtonStyle(
-                    foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.red),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        GestureDetector(
+                            onTap: () async {
+                              exibirTelaFavorito(context, user);
+                              // bool resultado = await _db.inserirUsuario(user);
 
-                    //info(users[index].url);
-                    //info(users[index].url);
-                    //print(info(users[index].url));
-                  },
-                  child: Text(
-                    'FAVORITAR',
-                    textScaleFactor: 1.3,
+                              // if (resultado) {
+                              //         print("Salvo com sucesso" + resultado.toString());
+                              // } else {
+                              //         print("Erro ao Salvar!");
+                              //   }
+
+                              print("clicou no coracao ");
+                              // print(obj.id);
+                              // exibirTelaConfirma(obj.id);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 10),
+                              child: Icon(Icons.favorite,
+                                  color: Colors.purple, size: 45.0),
+                            )),
+                      ],
+                    ),
                   ),
                 ),
+                // TextButton(
+                //   style: ButtonStyle(
+                //     foregroundColor:
+                //         MaterialStateProperty.all<Color>(Colors.red),
+                //   ),
+                //   onPressed: () {
+                //     Navigator.pop(context);
+
+                //     //info(users[index].url);
+                //     //info(users[index].url);
+                //     //print(info(users[index].url));
+                //   },
+                //   child: Text(
+                //     'FAVORITAR',
+                //     textScaleFactor: 1.3,
+                //   ),
+                // ),
                 TextButton(
                   style: ButtonStyle(
                     foregroundColor:
@@ -146,7 +219,8 @@ class ListarUser extends StatelessWidget {
                   ),
                   onPressed: () async {
                     //Navigator.pop(context);
-                    if (!await launch(user.html_url)) throw 'Não é possível abrir ${user.html_url}';
+                    if (!await launch(user.html_url))
+                      throw 'Não é possível abrir ${user.html_url}';
                     //info(users[index].url);
                     //info(users[index].url);
                     //print(info(users[index].url));
