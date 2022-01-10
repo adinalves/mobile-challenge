@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_challenge/models/user.dart';
@@ -19,21 +18,23 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   ScrollController _scrollController = new ScrollController();
-  bool _loading = false;
+
   List<Usuario> _users = [];
+  List<Usuario> listaDeUsuarios = [];
+  String _userName = '';
 
   bool _finishScroll = false;
-  int _currentPage = 1;
-  String _username = '';
+  bool _loading = false;
   bool flagErro = false;
 
-  List<Usuario> listadeusuarios = [];
+  int _currentPage = 1;
+
   UserHelpers _db = UserHelpers();
 
-  void salvarUsuario(Usuario user) async {
+  void _salvarUsuario(Usuario user) async {
     user = await info(user);
     await _db.inserirUsuario(user);
-    listadeusuarios.add(user);
+    listaDeUsuarios.add(user);
     setState(() {
       user.favorito = true;
     });
@@ -89,40 +90,31 @@ class _HomePageState extends State<HomePage> {
   }
 
   void removerUsuario(Usuario u) async {
-    await _db.excluirUsuario(u.id!);
-    setState(() {
-      u.favorito = false;
+    await _db.excluirUsuario(u.id).then((value) {
+      setState(() {
+        u.favorito = !value;
+        listaDeUsuarios.removeWhere((item) => item.id == u.id);
+      });
     });
-    listadeusuarios.removeWhere((item) => item.id == u.id);
   }
 
   void recuperarUsuario() async {
     List usuariosRecuperandos = await _db.listarUser();
 
     setState(() {
-      listadeusuarios =
+      listaDeUsuarios =
           (usuariosRecuperandos).map((e) => Usuario.fromJson(e)).toList();
     });
   }
 
   List<Usuario> userfavorito(List<Usuario> usr) {
-    //print(_users.map((e) => e.id).contains(listadeusuarios[0].id));
-
     for (int i = 0; i < usr.length; i++) {
-      if (listadeusuarios.map((e) => e.id).contains(usr[i].id)) {
+      if (listaDeUsuarios.map((e) => e.id).contains(usr[i].id)) {
         usr[i].favorito = true;
       }
     }
 
     return usr;
-
-    // for (int i = 0; i < _users.length; i++) {
-    //   for (int j = 0; j < listadeusuarios.length; j++) {
-    //     if (_users[i].id == listadeusuarios[j].id) {
-    //       _users[i].favorito = true;
-    //     }
-    //   }
-    // }
   }
 
   Future<Usuario> info(Usuario usr) async {
@@ -146,53 +138,52 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> searchUsuarios({int page = 1}) async {
-    if (_loading) return;
-
-    setState(() {
-      if (page == 1 && _users.isNotEmpty) {
-        flagErro = false;
-
-        _users.clear();
-        _finishScroll = false;
-      }
-    });
-
-    setState(() {
-      _loading = true;
-    });
-    try {
-      var response = await http.get(
-          Uri.parse(
-              'https://api.github.com/search/users?q=$_username&page=$page&per_page=10'),
-          headers: {
-            HttpHeaders.authorizationHeader:
-                dotenv.get('TOKEN', fallback: 'Token não encontrado')
-          });
-      print(response.statusCode);
-      //if (response.statusCode == 200) {
-      var data = jsonDecode(response.body);
-      var items = (data['items'] as List);
+    if (!_loading) {
       setState(() {
-        _loading = false;
-        _currentPage = page;
+        if (page == 1 && _users.isNotEmpty) {
+          flagErro = false;
 
-        if (items.isEmpty) {
-          _finishScroll = true;
-          return;
+          _users.clear();
+          _finishScroll = false;
         }
+      });
 
-        var aux =
-            (data['items'] as List).map((e) => Usuario.fromJson(e)).toList();
-        _users += userfavorito(aux);
-      });
-    } catch (e) {
-      print('entrouu');
       setState(() {
-        flagErro = true;
-        _loading = false;
+        _loading = true;
       });
-      exibirTelaErro();
-      print('Erro ao buscar as informações dos usuários');
+      try {
+        var response = await http.get(
+            Uri.parse(
+                'https://api.github.com/search/users?q=$_userName&page=$page&per_page=10'),
+            headers: {
+              HttpHeaders.authorizationHeader:
+                  dotenv.get('TOKEN', fallback: 'Token não encontrado')
+            });
+        print(response.statusCode);
+        //if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        var items = (data['items'] as List);
+        setState(() {
+          _loading = false;
+          _currentPage = page;
+
+          if (items.isEmpty) {
+            _finishScroll = true;
+            return;
+          }
+
+          var aux =
+              (data['items'] as List).map((e) => Usuario.fromJson(e)).toList();
+          _users += userfavorito(aux);
+        });
+      } catch (e) {
+        setState(() {
+          flagErro = true;
+          _loading = false;
+        });
+        exibirTelaErro();
+        print('Erro ao buscar as informações dos usuários');
+      }
     }
   }
 
@@ -200,7 +191,7 @@ class _HomePageState extends State<HomePage> {
     if (user.favorito) {
       removerUsuario(user);
     } else {
-      salvarUsuario(user);
+      _salvarUsuario(user);
     }
   }
 
@@ -263,10 +254,10 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   children: <Widget>[
                     FormUser(
-                      repo: _username,
+                      repo: _userName,
                       changeRepo: (value) {
                         setState(() {
-                          _username = value;
+                          _userName = value;
                         });
                       },
                       onSearch: searchUsuarios,
@@ -304,7 +295,7 @@ class _HomePageState extends State<HomePage> {
                                             NetworkImage(_users[index].avatar!),
                                         radius: 30.0,
                                       ),
-                                      title: Text(_users[index].login!,
+                                      title: Text(_users[index].login,
                                           style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               color: Colors.purple,
@@ -385,9 +376,9 @@ class _HomePageState extends State<HomePage> {
                   children: <Widget>[
                     Expanded(
                         child: ListView.builder(
-                            itemCount: listadeusuarios.length,
+                            itemCount: listaDeUsuarios.length,
                             itemBuilder: (context, index) {
-                              final Usuario obj = listadeusuarios[index];
+                              final Usuario obj = listaDeUsuarios[index];
                               return Card(
                                 child: Column(
                                   children: [

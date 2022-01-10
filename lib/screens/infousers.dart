@@ -53,9 +53,7 @@ class _InfoUsuarioState extends State<InfoUsuario> {
                                     (widget.favoritar!)(widget.usr);
                                     setState(() {
                                       (widget.usr)!.favorito =
-                                          ((widget.usr)!.favorito == true)
-                                              ? false
-                                              : true;
+                                          !(widget.usr)!.favorito;
                                     });
                                   },
                                   child: Padding(

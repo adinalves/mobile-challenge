@@ -1,6 +1,6 @@
 class Usuario {
-  int? id;
-  String? login;
+  int id;
+  String login;
   String? url;
   String? htmlurl;
   String? bio;
@@ -11,8 +11,8 @@ class Usuario {
   bool favorito;
 
   Usuario({
-    this.id,
-    this.login,
+    required this.id,
+    required this.login,
     this.bio,
     this.localizacao,
     this.avatar,
@@ -25,14 +25,13 @@ class Usuario {
   factory Usuario.fromJson(Map<String, dynamic> json) {
     return Usuario(
       id: json['id'],
-      login: json['login'] != null ? json['login'] : 'Não informado',
-      bio: json['bio'] != null ? json['bio'] : 'Não informada',
-      localizacao:
-          json['location'] != null ? json['location'] : 'Não informada',
-      avatar: json['avatar_url'] != null ? json['avatar_url'] : 'Não informado',
-      url: json['url'] != null ? json['url'] : 'Não informado',
-      email: json['email'] != null ? json['email'] : 'Não informado',
-      htmlurl: json['html_url'] != null ? json['html_url'] : 'Não informado',
+      login: json['login'] ?? 'Não informado',
+      bio: json['bio'] ?? 'Não informada',
+      localizacao: json['location'] ?? 'Não informada',
+      avatar: json['avatar_url'] ?? 'Não informado',
+      url: json['url'] ?? 'Não informado',
+      email: json['email'] ?? 'Não informado',
+      htmlurl: json['html_url'] ?? 'Não informado',
     );
   }
 
